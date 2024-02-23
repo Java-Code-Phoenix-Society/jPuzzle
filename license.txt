@@ -1,0 +1,30 @@
+JPuzzle Licence Agreement
+
+PLEASE READ THIS DOCUMENT CAREFULLY. BY DOWNLOADING THE
+SOFTWARE, YOU ARE  AGREEING TO BECOME BOUND BY THE TERMS
+OF THIS AGREEMENT. IF YOU DO NOT AGREE TO  THE TERMS OF
+THE AGREEMENT, PLEASE DO NOT DOWNLOAD THE SOFTWARE. 
+
+1. License. Joseph Bowbeer grants to you ("Licensee") a nonexclusive, 
+nontransferable, worldwide, royalty-free license to use this version of the 
+Software for non-commercial and educational purposes. 
+
+2. Copyright. The Software is owned by Joseph Bowbeer and is protected by 
+United States copyright laws and international treaty provisions. You may not 
+remove the copyright notice from any copy of the Software or any copy of the 
+written materials, if any, accompanying the Software. 
+
+3. NO WARRANTY. ANY USE BY YOU OF THE SOFTWARE IS AT YOUR OWN RISK. THE
+SOFTWARE IS PROVIDED FOR USE "AS IS" WITHOUT WARRANTY OF ANY KIND. TO THE
+MAXIMUM EXTENT PERMITTED BY LAW, Joseph Bowbeer DISCLAIMS ALL WARRANTIES OF 
+ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, WITHOUT LIMITATION, IMPLIED 
+WARRANTIES OR CONDITIONS OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+PURPOSE. 
+
+If any provision of this Agreement is deemed invalid or unenforceable by any 
+country or government agency having jurisdiction, that particular provision will 
+be deemed modified to the extent necessary to make the provision valid and 
+enforceable, and the remaining provisions will remain in full force and effect. 
+
+For questions concerning this Agreement, please contact Joseph Bowbeer at
+jozart@csi.com 
