@@ -1,3 +1,4 @@
+package dev.jcps.jpuzzle;
 /*
  * PuzzleUI.java
  *
@@ -23,10 +24,9 @@ public class PuzzleUI extends ComponentUI {
     private static final PuzzleUI puzzleUI = new PuzzleUI();
 
     /**
-     * @param c input JComponent
      * @return PuzzleUI instance.
      */
-    public static ComponentUI createUI(JComponent c) {
+    public static ComponentUI createUI() {
         return puzzleUI;
     }
 
@@ -37,6 +37,7 @@ public class PuzzleUI extends ComponentUI {
      * @param c input JComponent
      * @return the preferred size.
      */
+    @Override
     public Dimension getPreferredSize(JComponent c) {
         Insets insets = c.getInsets();
         int dx = insets.left + insets.right;
@@ -56,6 +57,7 @@ public class PuzzleUI extends ComponentUI {
      *
      * @return the maximum size.
      */
+    @Override
     public Dimension getMaximumSize(JComponent c) {
         Icon icon = ((Puzzle) c).getIcon();
         if (icon != null) {

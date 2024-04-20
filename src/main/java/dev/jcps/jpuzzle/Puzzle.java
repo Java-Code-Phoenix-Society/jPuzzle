@@ -1,3 +1,4 @@
+package dev.jcps.jpuzzle;
 /*
  * Puzzle.java
  *
@@ -31,7 +32,7 @@ import java.util.Map;
  * refined by J.&nbsp;Bowbeer.
  *
  * @author Joseph Bowbeer
- *         <a href="mailto:jozart@csi.com">jozart@csi.com</a>
+ * <a href="mailto:jozart@csi.com">jozart@csi.com</a>
  * @version 1.2
  */
 public class Puzzle extends JComponent {
@@ -63,14 +64,14 @@ public class Puzzle extends JComponent {
      *
      * @serial
      */
-    private MoveQ mque;
+    private MoveQ mQue;
 
     /**
      * Maps board pieces to button components.
      *
      * @serial
      */
-    private Map pieces;
+    private Map<Object, PuzzleButton> pieces;
 
     /**
      * Solver instance.
@@ -139,12 +140,12 @@ public class Puzzle extends JComponent {
     /**
      * @serial
      */
-    private boolean textOutlined = true;
+    private boolean textOutlined = false;
 
     /**
      * @serial
      */
-    private boolean textOpaque = true;
+    private boolean textOpaque = false;
 
     /**
      * @serial
@@ -161,7 +162,6 @@ public class Puzzle extends JComponent {
      */
     public Puzzle() {
         setDoubleBuffered(true);
-        setOpaque(true);
         setBackground(Color.darkGray);
         setForeground(Color.gray); // piece color
         setFont(new Font("SansSerif", Font.BOLD, 24));
@@ -171,7 +171,7 @@ public class Puzzle extends JComponent {
          * we don't need uiClassID/getUIClassID/writeObject
          * because PuzzleUI doesn't installUI/uninstallUI.
          */
-        setUI(PuzzleUI.createUI(this));
+        setUI(PuzzleUI.createUI());
     }
 
     /**
@@ -187,6 +187,7 @@ public class Puzzle extends JComponent {
         JFrame frame = new JFrame("Puzzle");
         Puzzle pz = new Puzzle();
         frame.addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent event) {
                 System.exit(0);
             }
@@ -213,6 +214,7 @@ public class Puzzle extends JComponent {
      * This method is called internally and should not be called
      * directly by programs.
      */
+    @Override
     public void addNotify() {
         if (game == null) {
             createBoard();
@@ -224,6 +226,7 @@ public class Puzzle extends JComponent {
      * Sets the text font. Overridden to repaint the pieces when
      * the font changes.
      */
+    @Override
     public void setFont(Font font) {
         Font oldFont = getFont();
         super.setFont(font);
@@ -409,6 +412,7 @@ public class Puzzle extends JComponent {
      * This method is called internally and should not be called
      * directly by programs.
      */
+    @Override
     public boolean imageUpdate(Image image, int flags, int x, int y, int w, int h) {
         if (image == getImage()) {
             return super.imageUpdate(image, flags, x, y, w, h);
@@ -431,8 +435,8 @@ public class Puzzle extends JComponent {
      */
     protected synchronized Image getImage() {
         /* Receive icon from event thread. */
-        if (icon instanceof ImageIcon) {
-            return ((ImageIcon) icon).getImage();
+        if (icon instanceof ImageIcon ii) {
+            return ii.getImage();
         }
         return null;
     }
@@ -732,10 +736,10 @@ public class Puzzle extends JComponent {
         /* Remove old pieces and hole. */
 
         if (pieces != null) {
-            Iterator ci = pieces.values().iterator();
+            Iterator<PuzzleButton> ci = pieces.values().iterator();
             pieces = null;
             while (ci.hasNext()) {
-                Component c = (Component) ci.next();
+                Component c = ci.next();
                 c.setVisible(false);
                 remove(c);
             }
@@ -746,15 +750,13 @@ public class Puzzle extends JComponent {
         setLayout(new GridLayout(rows, cols, gap, gap));
 
         goal = new Board(cols, rows);
-        game = (Board) goal.clone();
-        pieces = new HashMap();
+        game = goal.copy(goal);
+        pieces = new HashMap<>();
 
-        Dimension dim = game.getSize();
+        //Dimension dim = game.getSize()
         ActionListener listener = new PieceListener();
 
-        Iterator pi = game.pieces().iterator();
-        while (pi.hasNext()) {
-            Object piece = pi.next();
+        for (Object piece : game.pieces()) {
             Point pos = goal.location(piece);
 
             PuzzleButton pb = new PuzzleButton();
@@ -765,12 +767,11 @@ public class Puzzle extends JComponent {
             add(pb);
         }
 
-        /* Reset moveq and solver. */
-
-        mque = new MoveQ();
+        // Reset MoveQ and solver.
+        mQue = new MoveQ();
         solver = null;
 
-        setHistory(mque.historySize() > 0);
+        setHistory(mQue.historySize() > 0);
         setSolved(game.matches(goal));
     }
 
@@ -791,21 +792,19 @@ public class Puzzle extends JComponent {
         /* Save old pieces. */
 
         Board oldGame = game;
-        Map oldPieces = pieces;
+        Map<Object, PuzzleButton> oldPieces = pieces;
 
         /* Scramble game board. */
 
         game = goal.scramble();
-        pieces = new HashMap();
+        pieces = new HashMap<>();
 
         /* Reassign pieces. */
 
-        Iterator pi = oldGame.pieces().iterator();
-        while (pi.hasNext()) {
-            Object oldpiece = pi.next();
-            PuzzleButton pb = (PuzzleButton) oldPieces.get(oldpiece);
+        for (Object oldPiece : oldGame.pieces()) {
+            PuzzleButton pb = oldPieces.get(oldPiece);
 
-            Point p = oldGame.location(oldpiece);
+            Point p = oldGame.location(oldPiece);
             Object piece = game.pieceAt(p);
             pieces.put(piece, pb);
 
@@ -814,12 +813,12 @@ public class Puzzle extends JComponent {
             pb.setVisible(piece != null);
         }
 
-        /* Reset moveq and solver. */
+        /* Reset moveQ and solver. */
 
-        mque = new MoveQ();
+        mQue = new MoveQ();
         solver = null;
 
-        setHistory(mque.historySize() > 0);
+        setHistory(mQue.historySize() > 0);
         setSolved(game.matches(goal));
     }
 
@@ -837,11 +836,7 @@ public class Puzzle extends JComponent {
         moveForward();
 
         if (!isSolved()) {
-            ActionListener callback = new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    moveForward();
-                }
-            };
+            ActionListener callback = e -> moveForward();
 
             timer = new Timer(delay, callback);
             timer.start();
@@ -863,7 +858,7 @@ public class Puzzle extends JComponent {
      * of the pending list.
      */
     public void moveBackward() {
-        if (mque.historySize() == 0) {
+        if (mQue.historySize() == 0) {
             thud();
             return;
         }
@@ -883,8 +878,8 @@ public class Puzzle extends JComponent {
          * solver, otherwise the new solver will be out of sync.
          */
         int n = (solver == null) ? 0 : 3;
-
-        while (mque.pendingSize() <= n && solveNext()) {
+        while (mQue.pendingSize() <= n && solveNext()) {
+            // run down list
         }
         nextMove();
     }
@@ -900,7 +895,7 @@ public class Puzzle extends JComponent {
         if (isSolved()) return false;
 
         if (solver == null) {
-            solver = new Solver((Board) game.clone(), goal, mque);
+            solver = new Solver(game.copy(game), goal, mQue);
         }
 
         return solver.solveNext();
@@ -930,8 +925,9 @@ public class Puzzle extends JComponent {
             return;
         }
 
-        while (movePiece(game.nMoveHole(n)) != n) {
-        }
+        do {
+            movePiece(game.nMoveHole(n));
+        } while (movePiece(game.nMoveHole(n)) != n);
     }
 
     /**
@@ -967,8 +963,8 @@ public class Puzzle extends JComponent {
     /**
      * Moves the hole in the direction indicated.
      */
-    private Object moveHole(int dcol, int drow) {
-        Object n = game.nMoveDelta(dcol, drow);
+    private Object moveHole(int dCol, int dRow) {
+        Object n = game.nMoveDelta(dCol, dRow);
 
         if (n == null) {
             thud();
@@ -987,10 +983,10 @@ public class Puzzle extends JComponent {
      * @return the piece.
      */
     private Object movePiece(Object n) {
-        mque.clearPending();
+        mQue.clearPending();
         solver = null;
 
-        mque.push(n);
+        mQue.push(n);
         nextMove();
         return n;
     }
@@ -1001,7 +997,7 @@ public class Puzzle extends JComponent {
      * "solved" properties.
      */
     private void moveBack() {
-        move(mque.pull());
+        move(mQue.pull());
 
         setSolved(game.matches(goal));
 
@@ -1010,10 +1006,10 @@ public class Puzzle extends JComponent {
              * The user just backed into a solution.
              * Don't let 'em back up any farther.
              */
-            mque.clearHistory();
+            mQue.clearHistory();
         }
 
-        setHistory(mque.historySize() > 0);
+        setHistory(mQue.historySize() > 0);
     }
 
     /**
@@ -1023,20 +1019,20 @@ public class Puzzle extends JComponent {
      * is solved.
      */
     private void nextMove() {
-        move(mque.pop());
+        move(mQue.pop());
 
-        setHistory(mque.historySize() > 0);
+        setHistory(mQue.historySize() > 0);
         setSolved(game.matches(goal));
 
         if (isSolved()) {
             stopSolving();
-            mque.clearPending();
+            mQue.clearPending();
             solver = null;
         }
     }
 
     /**
-     * Move implemention. Updates the game board and the buttons.
+     * Move implementation. Updates the game board and the buttons.
      *
      * @param n piece to move.
      */
@@ -1047,8 +1043,8 @@ public class Puzzle extends JComponent {
 
         /* Exchange hole and piece. */
 
-        PuzzleButton pb = (PuzzleButton) pieces.get(null);
-        PuzzleButton hole = (PuzzleButton) pieces.put(n, pb);
+        PuzzleButton pb = pieces.get(null);
+        PuzzleButton hole = pieces.put(n, pb);
         pieces.put(null, hole);
 
         assert hole != null;
@@ -1072,8 +1068,7 @@ public class Puzzle extends JComponent {
             java.io.Serializable {
         public void actionPerformed(ActionEvent e) {
             Object source = e.getSource();
-            if (source instanceof PuzzleButton) {
-                PuzzleButton pb = (PuzzleButton) source;
+            if (source instanceof PuzzleButton pb) {
                 Point p = pb.getPosition();
                 Object n = goal.pieceAt(p);
                 moveTowardHole(n);

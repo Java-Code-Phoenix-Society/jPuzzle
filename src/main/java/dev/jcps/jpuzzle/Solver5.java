@@ -1,3 +1,4 @@
+package dev.jcps.jpuzzle;
 /*
  * Solver5.java
  *
@@ -21,24 +22,26 @@ import java.awt.*;
  * @version 1.2
  */
 public class Solver5 extends AbstractSolver
-        implements iSolver.Pair {
+        implements ISolver.Pair {
     /* Michie's rules. */
 //                                          MA      MAI      MB      MBI      MC      MCI
-//  private static final int ruleSet2 = (1<<MA)|(1<<MAI)|(1<<MB)|(1<<MBI)                 ;
-    private static final int ruleSet3 = (1 << MC) | (1 << MCI);
-    private static final int ruleSet4 = (1 << MA) | (1 << MBI);
-    private static final int ruleSet5 = (1 << MAI) | (1 << MB) | (1 << MC) | (1 << MCI);
-    private static final int ruleSet6 = (1 << MAI) | (1 << MB);
+//  private static final int ruleSet2 = (1<<MA)|(1<<MAI)|(1<<MB)|(1<<MBI)
+    private static final int RULE_SET_3 = (1 << MC) | (1 << MCI);
+    private static final int RULE_SET_4 = (1 << MA) | (1 << MBI);
+    private static final int RULE_SET_5 = (1 << MAI) | (1 << MB) | (1 << MC) | (1 << MCI);
+    private static final int RULE_SET_6 = (1 << MAI) | (1 << MB);
     /**
      * Maps edge pairs to their piece positions.
      */
     private static final Point[][] edges =
             {
                     {new Point(0, 1), new Point(0, 0)},   // LEFT
-                    {new Point(2, 0), new Point(2, 1)},   // RGHT
+                    {new Point(2, 0), new Point(2, 1)},   // RIGHT
             };
+
     /**
      * Constructs a new 5-puzzle solver.
+     *
      * @param game current game board
      * @param goal the board in the goal state
      * @param mQue move queue
@@ -93,7 +96,7 @@ public class Solver5 extends AbstractSolver
      */
     public boolean solveCorner(Object n) {
         /*
-         * Rule: If piece n is at coord c[i]
+         * Rule: If piece n is at co-ord c[i]
          *  then choose move i.
          */
         final Point[] c =
@@ -118,7 +121,8 @@ public class Solver5 extends AbstractSolver
             }
         }
 
-        throw new RuntimeException("solveCorner");
+        //throw new RuntimeException("solveCorner")
+        return false;
     }
 
     /**
@@ -128,7 +132,7 @@ public class Solver5 extends AbstractSolver
      * @param n piece.
      * @return the piece distance.
      */
-    private final int pieceDistance(Object n) {
+    private int pieceDistance(Object n) {
         Point a = game.location(n);
         Point b = goal.location(n);
 
@@ -141,7 +145,7 @@ public class Solver5 extends AbstractSolver
      * @param pair edge pair.
      * @return the edge pair distance.
      */
-    private final int edgePairDistance(int pair) {
+    private int edgePairDistance(int pair) {
         Object n0 = goal.pieceAt(edges[pair][0]);
         Object n1 = goal.pieceAt(edges[pair][1]);
 
@@ -156,7 +160,7 @@ public class Solver5 extends AbstractSolver
      * @param pair edge pair.
      * @return the number of intervening pieces.
      */
-    private final int apart(int pair) {
+    private int apart(int pair) {
         Object n0 = goal.pieceAt(edges[pair][0]);
         Object n1 = goal.pieceAt(edges[pair][1]);
 
@@ -167,7 +171,8 @@ public class Solver5 extends AbstractSolver
                 return sum;
         }
 
-        throw new RuntimeException("apart");
+        //throw new RuntimeException("apart")
+        return 0;
     }
 
     /**
@@ -177,16 +182,18 @@ public class Solver5 extends AbstractSolver
      * @param c starting location.
      * @return the next location in a clockwise enumeration.
      */
-    private final Point iterate(Point c) {
-        if (c.y == 0)
-            if (c.x == 2)
+    private Point iterate(Point c) {
+        if (c.y == 0) {
+            if (c.x == 2) {
                 c.y++;
-            else
+            } else {
                 c.x++;
-        else if (c.x == 0)
+            }
+        } else if (c.x == 0) {
             c.y = 0;
-        else
+        } else {
             c.x = 0;   // skip hole at (1,1)
+        }
 
         return c;
     }
@@ -196,7 +203,7 @@ public class Solver5 extends AbstractSolver
      *
      * @return {@code true} - if moves were made.
      */
-    private final boolean solveEdge(int edge, int ruleSet) {
+    private boolean solveEdge(int edge, int ruleSet) {
         for (int m = 0; m < NMOVE; m++) {
             if ((ruleSet & 1 << m) != 0) {
                 pushMove(m);    // try it
@@ -205,7 +212,8 @@ public class Solver5 extends AbstractSolver
                 undoMove(m);    // undo it
             }
         }
-        throw new RuntimeException("solveEdge");
+        //throw new RuntimeException("solveEdge")
+        return false;
     }
 
     /**
@@ -216,56 +224,87 @@ public class Solver5 extends AbstractSolver
     private boolean solve5() {
         /* Compute edge pair distances. */
 
-        final int[] dists = new int[]
-                {
-                        edgePairDistance(LEFT),
-                        edgePairDistance(RGHT),
-                };
+        final int[] epds = new int[]{
+                edgePairDistance(LEFT),
+                edgePairDistance(RGHT),
+        };
 
         /*
          * RULE 2 -- if one edge is solved
          *  then twist the other edge into place.
          */
 
-        if (dists[LEFT] == 0)
+        if (epds[LEFT] == 0) {
             return solveEdge(RGHT, (1 << MB) | (1 << MBI));
+        }
 
-        if (dists[RGHT] == 0)
+        if (epds[RGHT] == 0) {
             return solveEdge(LEFT, (1 << MA) | (1 << MAI));
+        }
 
-        /* Determine edge pair apartness. */
+        /* Determine edge pair apart-ness. */
 
-        final int[] aparts = new int[]
-                {
-                        apart(LEFT),
-                        apart(RGHT),
-                };
+        final int[] gaps = new int[]{
+                apart(LEFT),
+                apart(RGHT),
+        };
+
+        Integer pep = rule3(gaps, epds);
+        if (pep == null) return true;
 
         /*
+         * RULE 4 -- if the preferred edge pair is one apart
+         *  and the intervening piece is at co-ord (0,1)
+         *  then twist the edge pair together toward its place.
+         */
+
+        if ((gaps[pep] == 1) && (game.pieceAt(CORNER).equals(goal.pieceAt(edges[pep][0])))) {
+            return rule4(pep, epds);
+        }
+
+        /*
+         * RULE 5 -- if preferred edge pair is one apart
+         *  and the intervening piece is not at co-ord (1,0)
+         *  then move the intervening piece to co-ord (1,0).
+         */
+
+        if (gaps[pep] == 1) {
+            return rule5(pep);
+        }
+
+        /*
+         * RULE 6 -- both edges must be three apart,
+         *  twist them so that they aren't.
+         */
+        return rule6();
+    }
+
+    private Integer rule3(int[] gaps, int[] epds) {
+        /*
          * RULE 3A -- if only one edge is together
-         *  and it can be twisted into place
+         *  and, it can be twisted into place
          *  then twist it into place.
          */
 
-        if ((aparts[LEFT] == 0) && (aparts[RGHT] != 0) &&
+        if ((gaps[LEFT] == 0) && (gaps[RGHT] != 0) &&
                 (game.pieceAt(CENTER).equals(goal.pieceAt(edges[LEFT][1])))) {
             pushMove(MAI);
-            return true;
+            return null;
         }
 
-        if ((aparts[RGHT] == 0) && (aparts[LEFT] != 0) &&
+        if ((gaps[RGHT] == 0) && (gaps[LEFT] != 0) &&
                 (game.pieceAt(CENTER).equals(goal.pieceAt(edges[RGHT][0])))) {
             pushMove(MB);
-            return true;
+            return null;
         }
 
         /* Identify the preferred edge pair (pep). */
 
         int pep = LEFT;
 
-        if ((aparts[RGHT] < aparts[LEFT]) ||
-                ((aparts[RGHT] == aparts[LEFT]) &&
-                        (dists[RGHT] < dists[LEFT]))) {
+        if ((gaps[RGHT] < gaps[LEFT]) ||
+                ((gaps[RGHT] == gaps[LEFT]) &&
+                        (epds[RGHT] < epds[LEFT]))) {
             pep = RGHT;
         }
 
@@ -274,85 +313,86 @@ public class Solver5 extends AbstractSolver
          *  but not in place, move it closer into place.
          */
 
-        if (aparts[pep] == 0) {
-            for (int m = 0; m < NMOVE; m++) {
-                if ((ruleSet3 & 1 << m) != 0) {
-                    pushMove(m);    // try it
-                    if (edgePairDistance(pep) < dists[pep])
-                        return true;
-                    undoMove(m);    // undo it
-                }
-            }
-            throw new RuntimeException("solve5 - rule 3b");
+        if (gaps[pep] == 0) {
+            return rule3b(epds, pep);
         }
+        return pep;
+    }
 
+    private Integer rule3b(int[] epds, int pep) {
+        for (int m = 0; m < NMOVE; m++) {
+            if ((RULE_SET_3 & 1 << m) != 0) {
+                pushMove(m);    // try it
+                if (edgePairDistance(pep) < epds[pep])
+                    return null;
+                undoMove(m);    // undo it
+            }
+        }
+        //throw new RuntimeException("solve5 - rule 3b")
+        return 0;
+    }
+
+    private boolean rule4(int pep, int[] epds) {
         /*
-         * RULE 4 -- if the preferred edge pair is one apart
-         *  and the intervening piece is at coord (0,1)
-         *  then twist the edge pair together toward its place.
+         * If edge[0] is at co-ord (0,0)
+         *  then intervening piece is at co-ord (1,0).
          */
-
-        if ((aparts[pep] == 1) &&
-                (game.pieceAt(CORNER).equals(goal.pieceAt(edges[pep][0])))) {
-            /*
-             * If edge[0] is at coord (0,0)
-             *  then intervening piece is at coord (1,0).
-             */
-            for (int m = 0; m < NMOVE; m++) {
-                if ((ruleSet4 & 1 << m) != 0) {
-                    pushMove(m);    // try it
-                    if (edgePairDistance(pep) < dists[pep])
-                        return true;
-                    undoMove(m);    // undo it
-                }
+        for (int m = 0; m < NMOVE; m++) {
+            if ((RULE_SET_4 & 1 << m) != 0) {
+                pushMove(m);    // try it
+                if (edgePairDistance(pep) < epds[pep])
+                    return true;
+                undoMove(m);    // undo it
             }
-            throw new RuntimeException("solve5 - rule 4");
         }
+        //throw new RuntimeException("solve5 - rule 4")
+        return false;
+    }
 
-        /*
-         * RULE 5 -- if preferred edge pair is one apart
-         *  and the intervening piece is not at coord (1,0)
-         *  then move the intervening piece to coord (1,0).
-         */
+    /**
+     * RULE 5 -- if preferred edge pair is one apart
+     * and the intervening piece is not at co-ord (1,0)
+     * then move the intervening piece to co-ord (1,0).
+     */
+    private boolean rule5(int pep) {
+        /* Find position of edge[0] on the board. */
 
-        if (aparts[pep] == 1) {
-            /* Find position of edge[0] on the board. */
+        Object n = goal.pieceAt(edges[pep][0]);
+        Point c = game.location(n);
 
-            Object n = goal.pieceAt(edges[pep][0]);
-            Point c = game.location(n);
+        /* Rotate to find intervening piece. */
 
-            /* Rotate to find intervening piece. */
+        n = game.pieceAt(iterate(c));
 
-            n = game.pieceAt(iterate(c));
+        /* Move intervening piece to co-ord (1,0). */
 
-            /* Move intervening piece to coord (1,0). */
-
-            for (int m = 0; m < NMOVE; m++) {
-                if ((ruleSet5 & 1 << m) != 0) {
-                    pushMove(m);    // try it
-                    if (n.equals(game.pieceAt(CENTER)))
-                        return true;
-                    undoMove(m);    // undo it
-                }
+        for (int m = 0; m < NMOVE; m++) {
+            if ((RULE_SET_5 & 1 << m) != 0) {
+                pushMove(m);    // try it
+                if (n.equals(game.pieceAt(CENTER)))
+                    return true;
+                undoMove(m);    // undo it
             }
-            throw new RuntimeException("solve5 - rule 5");
         }
+        //throw new RuntimeException("solve5 - rule 5")
+        return false;
+    }
 
-        /*
-         * RULE 6 -- both edges must be three apart,
-         *  twist them so that they aren't.
-         */
-        {
-            for (int m = 0; m < NMOVE; m++) {
-                if ((ruleSet6 & 1 << m) != 0) {
-                    pushMove(m);    // try it
-                    if (apart(LEFT) < 3 || apart(RGHT) < 3)
-                        return true;
-                    undoMove(m);    // undo it
-                }
+    /**
+     * RULE 6 -- both edges must be three apart,
+     * twist them so that they aren't.
+     */
+    private boolean rule6() {
+        for (int m = 0; m < NMOVE; m++) {
+            if ((RULE_SET_6 & 1 << m) != 0) {
+                pushMove(m);    // try it
+                if (apart(LEFT) < 3 || apart(RGHT) < 3)
+                    return true;
+                undoMove(m);    // undo it
             }
-            throw new RuntimeException("solve5 - rule 6");
         }
+        //throw new RuntimeException("solve5 - rule 6")
+        return false;
     }
 }
 

@@ -1,3 +1,4 @@
+package dev.jcps.jpuzzle;
 /*
  * AbstractSolver.java
  *
@@ -8,8 +9,10 @@
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+
+import static dev.jcps.jpuzzle.Rotation.ROT0;
+import static dev.jcps.jpuzzle.Rotation.ROT180;
 
 /**
  * Base class for iterative Puzzle solvers. Maintains a game
@@ -25,10 +28,7 @@ import java.util.List;
  * @version 1.2
  */
 public abstract class AbstractSolver
-        implements Rotation,
-        iAbstractSolver.Direction,
-        iAbstractSolver.Move,
-        java.io.Serializable, iAbstractSolver {
+        implements IAbstractSolver.Direction, IAbstractSolver.Move, java.io.Serializable, IAbstractSolver {
     /**
      * Top left corner position.
      */
@@ -85,35 +85,20 @@ public abstract class AbstractSolver
      *
      * @serial
      */
-    protected /*final*/ MoveQ mque;
+    protected /*final*/ MoveQ mQue;
 
     /**
      * Constructs a new AbstractSolver.
      *
      * @param game The game board.
      * @param goal The goal state.
-     * @param mque The move queue.
+     * @param mQue The move queue.
      */
-    protected AbstractSolver(Board game, Board goal, MoveQ mque) {
+    protected AbstractSolver(Board game, Board goal, MoveQ mQue) {
         this.game = game;
         this.goal = goal;
-        this.mque = mque;
+        this.mQue = mQue;
     }
-
-//  /**
-//   * Solves the puzzle.
-//   *
-//   * @return {@code true} - if moves were made.
-//   */
-//  public boolean solveAll()
-//  {
-//      if (isSolved()) return false;
-//      while (solveNext())
-//      {
-//          if (isSolved()) return true;
-//      }
-//      throw new RuntimeException("solveAll");
-//  }
 
     /**
      * Checks if the piece at the given location is solved.
@@ -126,7 +111,8 @@ public abstract class AbstractSolver
 
         if (n == null)  // the hole is not a piece
         {
-            throw new RuntimeException("isPieceSolved(" + c + ")");
+            //throw new RuntimeException("isPieceSolved(" + c + ")")
+            return false;
         }
 
         return n.equals(game.pieceAt(c));
@@ -188,42 +174,42 @@ public abstract class AbstractSolver
     public boolean randomWalk() {
         /* Create a shuffled list of deltas. */
 
-        List list = Arrays.asList(deltas.clone());
+        List<Dimension> list = Arrays.asList(deltas.clone());
         Collections.shuffle(list);
-        Iterator iter = list.iterator();
 
         /* Try each one in turn. */
 
-        while (iter.hasNext()) {
-            Object n = game.moveDelta((Dimension) iter.next());
+        for (Dimension dimension : list) {
+            Object n = game.moveDelta(dimension);
             if (n != null) {
-                mque.push(n);
+                mQue.push(n);
                 return true;
             }
         }
 
-        throw new RuntimeException("randomWalk");
+        //throw new RuntimeException("randomWalk")
+        return false;
     }
 
     /**
      * Pushes a composite move.
      *
-     * @param imov move to push.
+     * @param iMov move to push.
      * @see #pushMove(int, int)
      */
-    protected void pushMove(int imov) {
-        pushMove(imov, ROT0);
+    protected void pushMove(int iMov) {
+        pushMove(iMov, ROT0);
     }
 
     /**
      * Pushes a rotated composite move.
      *
-     * @param imov composite move.
-     * @param irot rotation.
+     * @param iMov composite move.
+     * @param iRot rotation.
      */
-    protected void pushMove(int imov, int irot) {
-        for (int j = 0; j < moves[imov].length; j++) {
-            int dir = (moves[imov][j] + irot) % NDIR;
+    protected void pushMove(int iMov, int iRot) {
+        for (int j = 0; j < moves[iMov].length; j++) {
+            int dir = (moves[iMov][j] + iRot) % NDIR;
             pushMove(deltas[dir]);
         }
     }
@@ -231,23 +217,23 @@ public abstract class AbstractSolver
     /**
      * Pops a composite move.
      *
-     * @param imov move to undo
+     * @param iMov move to undo
      * @see #undoMove(int, int)
      */
-    protected void undoMove(int imov) {
-        undoMove(imov, ROT0);
+    protected void undoMove(int iMov) {
+        undoMove(iMov, ROT0);
     }
 
     /**
      * Pops a rotated composite move.
      *
-     * @param imov composite move.
-     * @param irot rotation.
+     * @param iMov composite move.
+     * @param iRot rotation.
      */
-    protected void undoMove(int imov, int irot) {
+    protected void undoMove(int iMov, int iRot) {
         /* Do the move backwards, looking in a mirror. */
-        for (int j = moves[imov].length; j-- > 0; ) {
-            int dir = (moves[imov][j] + irot + ROT180) % NDIR;
+        for (int j = moves[iMov].length; j-- > 0; ) {
+            int dir = (moves[iMov][j] + iRot + ROT180) % NDIR;
             undoMove(deltas[dir]);
         }
     }
@@ -277,7 +263,7 @@ public abstract class AbstractSolver
      */
     protected final void pushMove(Dimension delta) {
         /* move & filter do-nothing moves */
-        mque.push(game.moveDelta(delta), true);
+        mQue.push(game.moveDelta(delta), true);
     }
 
     /**
@@ -287,7 +273,7 @@ public abstract class AbstractSolver
      */
     protected final void undoMove(Dimension delta) {
         /* undo, regenerating elided moves */
-        mque.dequeue(game.moveDelta(delta));
+        mQue.dequeue(game.moveDelta(delta));
     }
 
 }

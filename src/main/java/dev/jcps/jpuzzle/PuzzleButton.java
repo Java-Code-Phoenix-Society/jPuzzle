@@ -1,3 +1,4 @@
+package dev.jcps.jpuzzle;
 /*
  * PuzzleButton.java
  *
@@ -109,6 +110,7 @@ public class PuzzleButton extends JComponent {
      * Paints the button. Paints the background, image, text label,
      * and bevel border, in that order.
      */
+    @Override
     protected void paintComponent(Graphics g) {
         Dimension size = getSize();
 
@@ -129,12 +131,12 @@ public class PuzzleButton extends JComponent {
 
         Image image = puzzle.getImage();
         if (image != null) {
-            int imgw = image.getWidth(null);
-            int imgh = image.getHeight(null);
-            int sx1 = col * imgw / cols;
-            int sy1 = row * imgh / rows;
-            int sx2 = sx1 + imgw / cols;
-            int sy2 = sy1 + imgh / rows;
+            int imgW = image.getWidth(null);
+            int imgH = image.getHeight(null);
+            int sx1 = col * imgW / cols;
+            int sy1 = row * imgH / rows;
+            int sx2 = sx1 + imgW / cols;
+            int sy2 = sy1 + imgH / rows;
 
             /*
              * NOTE: Set puzzle as image observer so all pieces
@@ -154,8 +156,8 @@ public class PuzzleButton extends JComponent {
             String text = String.valueOf(row * cols + col + 1);
             TextLayout tl = new TextLayout(text, f, frc);
             Rectangle2D r2 = tl.getBounds();
-            double x = offs + size.width / 2 - r2.getWidth() / 2;
-            double y = offs + size.height / 2 + r2.getHeight() / 2;
+            double x = offs + ((double) size.width / 2) - r2.getWidth() / 2;
+            double y = offs + ((double) size.height / 2) + r2.getHeight() / 2;
             Shape shape = tl.getOutline(AffineTransform.getTranslateInstance(x, y));
 
             Object oldHint =
@@ -230,6 +232,7 @@ public class PuzzleButton extends JComponent {
      */
     private class ButtonListener implements MouseListener, java.io.Serializable {
         public void mouseClicked(MouseEvent e) {
+            // Unused
         }
 
         public void mousePressed(MouseEvent e) {

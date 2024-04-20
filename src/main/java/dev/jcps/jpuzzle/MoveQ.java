@@ -1,3 +1,4 @@
+package dev.jcps.jpuzzle;
 /*
  * MoveQ.java
  *
@@ -30,7 +31,7 @@ import java.util.NoSuchElementException;
  * @author <a href="mailto:jozart@csi.com">Joseph Bowbeer</a>
  * @version 1.2
  */
-public class MoveQ implements Cloneable, java.io.Serializable {
+public class MoveQ implements java.io.Serializable {
     /**
      * Maximum length of move queue.
      */
@@ -41,16 +42,16 @@ public class MoveQ implements Cloneable, java.io.Serializable {
      *
      * @serial
      */
-    private List mq;
+    private List<Object> mq;
 
     /**
      * Index of the next pending move.
-     * Entries {@code qnxt} to the end are pending moves.
-     * Entries {@code 0} to {@code qnxt-1} are past moves, oldest first.
+     * Entries {@code qNxt} to the end are pending moves.
+     * Entries {@code 0} to {@code qNxt-1} are past moves, oldest first.
      *
      * @serial
      */
-    private int qnxt;
+    private int qNxt;
 
     /**
      * Constructs an empty move queue.
@@ -63,29 +64,36 @@ public class MoveQ implements Cloneable, java.io.Serializable {
      * Resets this move queue. Clears the pending list and history stack.
      */
     public void reset() {
-        mq = new ArrayList();
-        qnxt = 0;
+        mq = new ArrayList<>();
+        qNxt = 0;
     }
 
     /**
-     * Clones this move queue.
+     * Copy constructor for creating a deep copy of a MoveQ object.
      *
-     * @return a clone.
+     * @param original The original MoveQ object to be copied.
      */
-    public Object clone() {
-        MoveQ m = new MoveQ();
-        m.mq = new ArrayList(mq);
-        m.qnxt = qnxt;
-        return m;
+    public MoveQ(MoveQ original) {
+        this.mq = new ArrayList<>(original.mq);
+        this.qNxt = original.qNxt;
     }
 
+    /**
+     * Factory method for creating a deep copy of a MoveQ object.
+     *
+     * @param original The original MoveQ object to be copied.
+     * @return A deep copy of the original MoveQ object.
+     */
+    public static MoveQ copy(MoveQ original) {
+        return new MoveQ(original);
+    }
     /**
      * Returns the number of moves on the pending list.
      *
      * @return moves left in the list
      */
     public int pendingSize() {
-        return mq.size() - qnxt;
+        return mq.size() - qNxt;
     }
 
     /**
@@ -94,22 +102,22 @@ public class MoveQ implements Cloneable, java.io.Serializable {
      * @return number of moves on the stack
      */
     public int historySize() {
-        return qnxt;
+        return qNxt;
     }
 
     /**
      * Clears the pending list.
      */
     public void clearPending() {
-        mq.subList(qnxt, mq.size()).clear();
+        mq.subList(qNxt, mq.size()).clear();
     }
 
     /**
      * Clears the history stack.
      */
     public void clearHistory() {
-        mq.subList(0, qnxt).clear();
-        qnxt = 0;
+        mq.subList(0, qNxt).clear();
+        qNxt = 0;
     }
 
     /**
@@ -126,8 +134,8 @@ public class MoveQ implements Cloneable, java.io.Serializable {
      */
     public void push(Object n, boolean elide) {
         if (elide) {
-            int qend = mq.size() - 1;
-            if (qnxt <= qend && mq.get(qend).equals(n)) {
+            int qEnd = mq.size() - 1;
+            if (qNxt <= qEnd && mq.get(qEnd).equals(n)) {
                 dequeue();
                 return;
             }
@@ -147,17 +155,19 @@ public class MoveQ implements Cloneable, java.io.Serializable {
      */
     public void push(Object n) {
         if (n == null) {
-            throw new IllegalArgumentException("push(" + n + ")");
+            //throw new IllegalArgumentException("push(" + n + ")")
+            return;
         }
 
         // handle overflow
 
         if (mq.size() == MAX_SIZE) {
-            if (qnxt > 0) {
+            if (qNxt > 0) {
                 mq.remove(0); // shrink history stack
-                --qnxt;
+                --qNxt;
             } else {
-                throw new RuntimeException("push overflow");
+                //throw new RuntimeException("push overflow")
+                return;
             }
         }
 
@@ -167,7 +177,7 @@ public class MoveQ implements Cloneable, java.io.Serializable {
     /**
      * Removes the specified move from the tail of the pending list,
      * undoing an elision if necessary. If the specified move is not on
-     * the list, it must have been elided so it is pushed back on the
+     * the list, it must have been elided. So, it is pushed back on the
      * list instead!
      *
      * @param n the move.
@@ -177,8 +187,8 @@ public class MoveQ implements Cloneable, java.io.Serializable {
     public Object dequeue(Object n) {
         // elide handling
 
-        int qend = mq.size() - 1;
-        if (qnxt > qend || !mq.get(qend).equals(n)) {
+        int qEnd = mq.size() - 1;
+        if (qNxt > qEnd || !mq.get(qEnd).equals(n)) {
             push(n);
             return n;
         }
@@ -194,12 +204,12 @@ public class MoveQ implements Cloneable, java.io.Serializable {
      * @throws NoSuchElementException if the pending list is empty.
      */
     public Object dequeue() {
-        int qend = mq.size() - 1;
-        if (qnxt > qend) {
+        int qEnd = mq.size() - 1;
+        if (qNxt > qEnd) {
             throw new NoSuchElementException("dequeue underflow");
         }
 
-        return mq.remove(qend);
+        return mq.remove(qEnd);
     }
 
     /**
@@ -210,8 +220,8 @@ public class MoveQ implements Cloneable, java.io.Serializable {
      */
     public Object pop() {
         Object n = null; // nothing pending
-        if (qnxt < mq.size()) {
-            n = mq.get(qnxt++);
+        if (qNxt < mq.size()) {
+            n = mq.get(qNxt++);
         }
         return n;
     }
@@ -225,8 +235,8 @@ public class MoveQ implements Cloneable, java.io.Serializable {
      */
     public Object pull() {
         Object n = null; // no history
-        if (qnxt > 0) {
-            n = mq.get(--qnxt);
+        if (qNxt > 0) {
+            n = mq.get(--qNxt);
         }
         return n;
     }

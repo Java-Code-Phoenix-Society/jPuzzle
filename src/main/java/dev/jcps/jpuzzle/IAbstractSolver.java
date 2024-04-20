@@ -1,7 +1,9 @@
+package dev.jcps.jpuzzle;
+
 /**
  * The <code>iAbstractSolver</code> interface represents an abstract solver for a puzzle.
  */
-public interface iAbstractSolver {
+public interface IAbstractSolver {
     /**
      * Composite moves. The six basic hole-preserving moves on a
      * 5-puzzle ({@code 3 x 2}).
@@ -46,7 +48,7 @@ public interface iAbstractSolver {
     /**
      * The <code>Direction</code> interface defines directions for simple moves on a puzzle.
      */
-    public interface Direction {
+    interface Direction {
 
         /**
          * Represents the up direction.

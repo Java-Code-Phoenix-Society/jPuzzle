@@ -1,12 +1,13 @@
+package dev.jcps.jpuzzle;
 /**
  * The <code>iSolver</code> interface represents a solver for a puzzle.
  */
-public interface iSolver {
+public interface ISolver {
 
     /**
      * The <code>Pair</code> interface defines edge pairs.
      */
-    public interface Pair {
+    interface Pair {
 
         /**
          * Represents the left edge in a pair.

@@ -1,3 +1,4 @@
+package dev.jcps.jpuzzle;
 /*
  * Board.java
  *
@@ -15,8 +16,7 @@ import java.util.*;
  * @author <a href="mailto:jozart@csi.com">Joseph Bowbeer</a>
  * @version 1.2
  */
-public class Board implements
-        Cloneable, java.io.Serializable {
+public class Board implements java.io.Serializable {
     /**
      * Source of random integers.
      */
@@ -39,14 +39,14 @@ public class Board implements
      *
      * @serial
      */
-    private int ncols;
+    private int nCols;
 
     /**
      * Number of rows in root board.
      *
      * @serial
      */
-    private int nrows;
+    private int nRows;
 
     /**
      * Maps points to pieces. Shared by all views.
@@ -60,7 +60,7 @@ public class Board implements
      *
      * @serial
      */
-    private Map points;
+    private Map<Object, Point> points;
 
     /**
      * Origin of this view, relative to parent board.
@@ -92,32 +92,32 @@ public class Board implements
     }
 
     /**
-     * Constructs a {@code ncols} x {@code nrows} board and
+     * Constructs a {@code nCols} x {@code nRows} board and
      * assigns the pieces to their default positions.
      *
-     * @param ncols number of columns.
-     * @param nrows number of rows.
+     * @param nCols number of columns.
+     * @param nRows number of rows.
      */
-    public Board(int ncols, int nrows) {
-        this(ncols, nrows, true);
+    public Board(int nCols, int nRows) {
+        this(nCols, nRows, true);
     }
 
     /**
-     * Constructs a {@code ncols} x {@code nrows} board and
+     * Constructs a {@code nCols} x {@code nRows} board and
      * optionally assigns the pieces to their default positions.
      *
-     * @param ncols  number of columns.
-     * @param nrows  number of rows.
+     * @param nCols  number of columns.
+     * @param nRows  number of rows.
      * @param assign if {@code true} assign initial piece positions.
      */
-    protected Board(int ncols, int nrows, boolean assign) {
-        this.ncols = ncols;
-        this.nrows = nrows;
+    protected Board(int nCols, int nRows, boolean assign) {
+        this.nCols = nCols;
+        this.nRows = nRows;
 
-        pieces = new Object[ncols][nrows];
-        points = new HashMap();
+        pieces = new Object[nCols][nRows];
+        points = new HashMap<>();
         base = new Point();
-        size = new Dimension(ncols, nrows);
+        size = new Dimension(nCols, nRows);
         rot = Rotation.ROT0;
 
         if (!assign) return;
@@ -125,8 +125,8 @@ public class Board implements
         /* Assign pieces. */
 
         int k = 0;
-        for (int j = 0; j < nrows; j++) {
-            for (int i = 0; i < ncols; i++) {
+        for (int j = 0; j < nRows; j++) {
+            for (int i = 0; i < nCols; i++) {
                 Object n = ++k;
                 pieces[i][j] = n;
                 points.put(n, new Point(i, j));
@@ -135,24 +135,37 @@ public class Board implements
 
         /* Place hole (null) in last slot. */
 
-        if (ncols > 0 && nrows > 0) {
-            Object n = pieces[ncols - 1][nrows - 1];
-            pieces[ncols - 1][nrows - 1] = null;
-            Point p = (Point) points.remove(n);
+        if (nCols > 0 && nRows > 0) {
+            Object n = pieces[nCols - 1][nRows - 1];
+            pieces[nCols - 1][nRows - 1] = null;
+            Point p = points.remove(n);
             points.put(null, p);
         }
+    }
+
+    public Board(Board original) {
+        this.nCols = original.nCols;
+        this.nRows = original.nRows;
+        this.pieces = original.pieces.clone();
+        for (int i = 0; i < original.pieces.length; i++) {
+            this.pieces[i] = original.pieces[i].clone();
+        }
+        this.points = new HashMap<>(original.points);
+        this.base = new Point(original.base);
+        this.size = new Dimension(original.size);
+        this.rot = original.rot;
     }
 
     /**
      * Rotates a point clockwise about the origin.
      *
      * @param p    point.
-     * @param irot number of quarter-turns.
+     * @param iRot number of quarter-turns.
      * @return the rotated point.
      */
-    private static final Point rotate(Point p, int irot) {
-        Point p0 = trans[irot][0];
-        Point p1 = trans[irot][1];
+    private static Point rotate(Point p, int iRot) {
+        Point p0 = trans[iRot][0];
+        Point p1 = trans[iRot][1];
         return new Point(
                 p.x * p0.x + p.y * p0.y,
                 p.x * p1.x + p.y * p1.y);
@@ -162,11 +175,38 @@ public class Board implements
      * Rotates a point counterclockwise about the origin.
      *
      * @param p    point.
-     * @param irot number of quarter-turns.
+     * @param iRot number of quarter-turns.
      * @return the rotated point.
      */
-    private static final Point invrotate(Point p, int irot) {
-        return rotate(p, (Rotation.NROT - irot) % Rotation.NROT);
+    private static Point invRotate(Point p, int iRot) {
+        return rotate(p, (Rotation.NROT - iRot) % Rotation.NROT);
+    }
+
+    private static void doNSwaps(Object[] top, int nSwaps, Board b) {
+        if ((nSwaps & 1) != 0) {
+            final int len = b.size.width * b.size.height;
+
+            Object n0 = null;
+            Object n1 = null;
+
+            int k = top.length;
+            for (; k < len && n0 == null; k++) {
+                Point pk = new Point(b.col(k), b.row(k));
+                n0 = b.pieceAt(pk);
+            }
+
+            for (; k < len && n1 == null; k++) {
+                Point pk = new Point(b.col(k), b.row(k));
+                n1 = b.pieceAt(pk);
+            }
+
+            if (n0 == null || n1 == null) {
+                //throw new RuntimeException("assign")
+                return;
+            }
+
+            b.swap(n0, n1);
+        }
     }
 
     /**
@@ -179,23 +219,15 @@ public class Board implements
         return new Dimension(size);
     }
 
+
     /**
-     * Clones this board.
+     * Factory method for creating a deep copy of a Board object.
      *
-     * @return a clone.
+     * @param original The original Board object to be copied.
+     * @return A deep copy of the original Board object.
      */
-    public Object clone() {
-        Board b = new Board();
-        b.ncols = ncols;
-        b.nrows = nrows;
-        b.pieces = (Object[][]) pieces.clone();
-        for (int i = 0; i < pieces.length; i++)
-            b.pieces[i] = (Object[]) pieces[i].clone();
-        b.points = new HashMap(points);
-        b.base = new Point(base);
-        b.size = new Dimension(size);
-        b.rot = rot;
-        return b;
+    public Board copy(Board original) {
+        return new Board(original);
     }
 
     /**
@@ -223,7 +255,7 @@ public class Board implements
                 Object p = pieceAt(c);
                 Object q = b.pieceAt(c);
 
-                if (p != q && (p == null || !p.equals(q)))
+                if (!Objects.equals(p, q))
                     return false;
             }
         }
@@ -234,15 +266,15 @@ public class Board implements
     /**
      * Creates a shifted, clipped view of this board.
      *
-     * @param newbase origin of view.
-     * @param newsize size of view.
+     * @param newBase origin of view.
+     * @param newSize size of view.
      * @return the new board.
      * @throws IllegalArgumentException if the parameters do not
      *                                  define a valid view.
      * @see #transform(Point, Dimension, int)
      */
-    public Board transform(Point newbase, Dimension newsize) {
-        return transform(newbase, newsize, Rotation.ROT0);
+    public Board transform(Point newBase, Dimension newSize) {
+        return transform(newBase, newSize, Rotation.ROT0);
     }
 
     /**
@@ -250,34 +282,34 @@ public class Board implements
      * This board and the view returned share piece mappings: a
      * piece moved in the view will be reflected in this board.
      *
-     * @param newbase origin of view.
-     * @param newsize size of view.
-     * @param newrot  rotation of view.
+     * @param newBase origin of view.
+     * @param newSize size of view.
+     * @param newRot  rotation of view.
      * @return the new board.
      * @throws IllegalArgumentException if the parameters do not
      *                                  define a valid view.
      */
-    public Board transform(Point newbase, Dimension newsize, int newrot) {
+    public Board transform(Point newBase, Dimension newSize, int newRot) {
         Board b = new Board();
-        b.ncols = ncols;
-        b.nrows = nrows;
+        b.nCols = nCols;
+        b.nRows = nRows;
         b.pieces = pieces;
         b.points = points;
 
-        b.base = invrotate(newbase, rot);
+        b.base = invRotate(newBase, rot);
         b.base.translate(base.x, base.y);
-        b.size = new Dimension(newsize);
-        b.rot = (rot + newrot) % Rotation.NROT;
+        b.size = new Dimension(newSize);
+        b.rot = (rot + newRot) % Rotation.NROT;
 
         /* Check extents. */
 
         Point p = new Point(b.size.width - 1, b.size.height - 1);
-        p = invrotate(p, b.rot);
+        p = invRotate(p, b.rot);
         p.translate(b.base.x, b.base.y);
-        if (b.base.x < 0 || b.base.x >= b.ncols ||
-                b.base.y < 0 || b.base.y >= b.nrows ||
-                p.x < 0 || p.x >= b.ncols ||
-                p.y < 0 || p.y >= b.nrows) {
+        if (b.base.x < 0 || b.base.x >= b.nCols ||
+                b.base.y < 0 || b.base.y >= b.nRows ||
+                p.x < 0 || p.x >= b.nCols ||
+                p.y < 0 || p.y >= b.nRows) {
             throw new IllegalArgumentException("invalid transform");
         }
 
@@ -294,7 +326,7 @@ public class Board implements
      *                                  be found or if its location is outside this view.
      */
     public Point location(Object piece) {
-        Point p = (Point) points.get(piece);
+        Point p = points.get(piece);
 
         if (p == null) {
             throw new IllegalArgumentException("location(" + piece + ")");
@@ -324,7 +356,7 @@ public class Board implements
             return null; // out of bounds
         }
 
-        Point c = invrotate(p, rot);
+        Point c = invRotate(p, rot);
         c.translate(base.x, base.y);
 
         return pieces[c.x][c.y];
@@ -337,7 +369,7 @@ public class Board implements
      *
      * @return a collection of the pieces.
      */
-    public Collection pieces() {
+    public Collection<Object> pieces() {
         return new Pieces();
     }
 
@@ -370,7 +402,7 @@ public class Board implements
      * @return {@code true} - if the piece can be moved.
      */
     public boolean canMove(Object piece) {
-        return (piece != null) ? canMove(location(piece)) : false;
+        return (piece != null) && canMove(location(piece));
     }
 
     /**
@@ -419,9 +451,9 @@ public class Board implements
      */
     private Dimension delta(Point p) {
         Point p0 = location(null);
-        int dcol = p.x - p0.x;
-        int drow = p.y - p0.y;
-        return new Dimension(dcol, drow);
+        int dCol = p.x - p0.x;
+        int dRow = p.y - p0.y;
+        return new Dimension(dCol, dRow);
     }
 
     /**
@@ -442,8 +474,8 @@ public class Board implements
      * Moves the piece at the location corresponding to the
      * given column and row distances.
      */
-    private Object moveDelta(int dcol, int drow) {
-        Object piece = nMoveDelta(dcol, drow);
+    private Object moveDelta(int dCol, int dRow) {
+        Object piece = nMoveDelta(dCol, dRow);
         if (piece != null) {
             swap(piece, null);
         }
@@ -469,20 +501,20 @@ public class Board implements
      * Finds the piece adjacent to the hole at the location
      * indicated by the given column and row distances.
      *
-     * @param dcol column distance.
-     * @param drow row distance.
+     * @param dCol column distance.
+     * @param dRow row distance.
      * @return the piece adjacent to the hole, or {@code null} if
      * the location is off limits (boundary condition).
      * @throws IllegalArgumentException if the distances do not
      *                                  correspond to a location adjacent to the hole.
      */
-    public Object nMoveDelta(int dcol, int drow) {
-        if (Math.abs(dcol) + Math.abs(drow) != 1) {
-            throw new IllegalArgumentException("nMoveDelta(" + dcol + "," + drow + ")");
+    public Object nMoveDelta(int dCol, int dRow) {
+        if (Math.abs(dCol) + Math.abs(dRow) != 1) {
+            throw new IllegalArgumentException("nMoveDelta(" + dCol + "," + dRow + ")");
         }
 
         Point p = location(null);
-        p.translate(dcol, drow);
+        p.translate(dCol, dRow);
         return pieceAt(p);
     }
 
@@ -550,13 +582,8 @@ public class Board implements
             d.width = (d.width < 0) ? -1 : 1;
             d.height = 0;
         } else if (d.height > 0) {
-            //d.width = 0;
             d.height = 1;
-        } else {
-            //d.width = 0;
-            //d.height = 0;
         }
-
         return d;
     }
 
@@ -572,8 +599,8 @@ public class Board implements
             throw new IllegalArgumentException("swap(" + a + "," + b + ")");
         }
 
-        Point pa = (Point) points.get(a);
-        Point pb = (Point) points.get(b);
+        Point pa = points.get(a);
+        Point pb = points.get(b);
 
         pieces[pa.x][pa.y] = b;
         pieces[pb.x][pb.y] = a;
@@ -599,7 +626,7 @@ public class Board implements
      * @return the scrambled copy.
      */
     public Board scramble(boolean bMoveHole) {
-        Board b = (Board) this.clone();
+        Board b = this.copy(this);
 
         final int len = b.size.width * b.size.height - 1; /* not hole */
 
@@ -608,14 +635,15 @@ public class Board implements
          *  including itself.
          */
 
-        int nswaps = 0;
+        int nSwaps = 0;
         for (int n = 0; n < len - 1; n++) {
             Point pn = new Point(b.col(n), b.row(n));
             Object sn = b.pieceAt(pn);
 
             // assert hole is last and stays there
             if (sn == null) {
-                throw new RuntimeException("scramble");
+                //throw new RuntimeException("scramble")
+                return null;
             }
 
             int k = n + random.nextInt(len - n);
@@ -626,17 +654,18 @@ public class Board implements
 
                 // assert hole is last and stays there
                 if (sk == null) {
-                    throw new RuntimeException("scramble");
+                    //throw new RuntimeException("scramble")
+                    return null;
                 }
 
                 b.swap(sn, sk);
-                nswaps++;
+                nSwaps++;
             }
         }
 
-        /* If nswaps is odd then swap once more. */
+        /* If nSwaps is odd then swap once more. */
 
-        if ((nswaps & 1) != 0) {
+        if ((nSwaps & 1) != 0) {
             Point p = new Point(b.col(1), b.row(1));
             b.swap(b.pieceAt(new Point(0, 0)), b.pieceAt(p));
         }
@@ -676,7 +705,7 @@ public class Board implements
 
         /* Top pieces are fixed: swap them into place. */
 
-        int nswaps = 0;
+        int nSwaps = 0;
         Point p = new Point();
         for (p.x = 0; p.x < top.length; p.x++) {
             if (!p.equals(b.location(top[p.x]))) {
@@ -684,44 +713,23 @@ public class Board implements
 
                 // assert hole is not in top row
                 if (n == null) {
-                    throw new RuntimeException("assign");
+                    //throw new RuntimeException("assign")
+                    return null;
                 }
 
                 b.swap(n, top[p.x]);
-                nswaps++;
+                nSwaps++;
             }
         }
 
         /*
-         * If nswaps is odd then swap two unfixed pieces.
+         * If nSwaps is odd then swap two unfixed pieces.
          *
          * NOTE: To produce the same goal each time, the
          * pieces could be exchange-sorted before starting,
          * keeping a count of swaps made during the sort.
          */
-        if ((nswaps & 1) != 0) {
-            final int len = b.size.width * b.size.height;
-
-            Object n0 = null;
-            Object n1 = null;
-
-            int k = top.length;
-            for (; k < len && n0 == null; k++) {
-                Point pk = new Point(b.col(k), b.row(k));
-                n0 = b.pieceAt(pk);
-            }
-
-            for (; k < len && n1 == null; k++) {
-                Point pk = new Point(b.col(k), b.row(k));
-                n1 = b.pieceAt(pk);
-            }
-
-            if (n0 == null || n1 == null) {
-                throw new RuntimeException("assign");
-            }
-
-            b.swap(n0, n1);
-        }
+        doNSwaps(top, nSwaps, b);
 
         return b;
     }
@@ -729,15 +737,15 @@ public class Board implements
     /**
      * An unmodifiable collection of pieces in row-major order.
      */
-    private class Pieces extends AbstractCollection {
+    private class Pieces extends AbstractCollection<Object> {
         private final int len = size.width * size.height;
 
         public int size() {
             return len;
         }
 
-        public Iterator iterator() {
-            return new Iterator() {
+        public Iterator<Object> iterator() {
+            return new Iterator<>() {
                 private int k = 0;
 
                 public boolean hasNext() {
@@ -753,6 +761,7 @@ public class Board implements
                     return pieceAt(p);
                 }
 
+                @Override
                 public void remove() {
                     throw new UnsupportedOperationException();
                 }
